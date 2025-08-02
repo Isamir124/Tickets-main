@@ -1,0 +1,72 @@
+{
+  "system": {
+    "name": "Sistema Avanzato di Ticket",
+    "description": "Bot professionale per la gestione del supporto",
+    "ready": "✅ Bot avviato come {tag}",
+    "presence": "🛠️ {server} | Sistema di supporto professionale",
+    "loading": "🔄 Caricamento sistema...",
+    "error": "❌ Errore imprevisto. Riprova.",
+    "permission_denied": "❌ Non hai i permessi per questa azione.",
+    "database_loading": "❌ Sistema in avvio. Attendi un momento."
+  },
+  "tickets": {
+    "center_title": "🎫 Centro Supporto Professionale",
+    "center_description": "Seleziona la categoria che descrive meglio la tua situazione. Il nostro team ti assisterà con massima priorità.",
+    "select_placeholder": "📌 Seleziona una categoria di aiuto",
+    "categories": {
+      "support": {
+        "name": "🛠️ Supporto Tecnico",
+        "description": "Problemi tecnici o aiuto con i servizi",
+        "details": "Hai problemi tecnici? I nostri specialisti ti aiuteranno a risolverli rapidamente."
+      },
+      "report": {
+        "name": "🚫 Segnala Utente",
+        "description": "Segnala comportamenti inappropriati",
+        "details": "Hai avuto un problema con un altro utente? Segnala la situazione e la esamineremo."
+      },
+      "question": {
+        "name": "❓ Richieste Generali",
+        "description": "Domande sul server o sui servizi",
+        "details": "Hai domande generali? Siamo qui per chiarire tutti i tuoi dubbi."
+      },
+      "billing": {
+        "name": "💳 Fatturazione",
+        "description": "Richieste su pagamenti e abbonamenti",
+        "details": "Problemi con pagamenti o fatturazione? Ti aiutiamo con tutti gli aspetti finanziari."
+      },
+      "feature": {
+        "name": "✨ Suggerimenti",
+        "description": "Proposte di miglioramenti o nuove funzionalità",
+        "details": "Hai idee per migliorare i nostri servizi? Ci piace sentire suggerimenti."
+      }
+    },
+    "priorities": {
+      "critical": "🔴 CRITICA",
+      "high": "🟠 ALTA", 
+      "medium": "🟡 MEDIA",
+      "low": "🟢 BASSA"
+    },
+    "modal": {
+      "title": "📝 Crea Ticket Professionale",
+      "description_label": "Come possiamo aiutarti?",
+      "description_placeholder": "Descrivi la tua situazione in dettaglio...",
+      "priority_label": "Priorità del ticket",
+      "priority_placeholder": "Seleziona il livello di urgenza"
+    },
+    "created": "✅ Ticket creato: {channel}",
+    "new_ticket": "🎫 Nuovo Ticket",
+    "user": "🧑 Utente",
+    "id": "🆔 ID Ticket",
+    "created_at": "🕒 Creato",
+    "description": "📃 Descrizione",
+    "priority": "⚡ Priorità",
+    "footer": "Uno specialista ti contatterà presto.",
+    "buttons": {
+      "claim": "🎟️ Rivendica",
+      "add_user": "➕ Aggiungi Utente",
+      "close": "🔴 Chiudi Ticket",
+      "priority": "⚡ Cambia Priorità",
+      "transcript": "📋 Vedi Trascrizione"
+    }
+  }
+}
