@@ -1,6 +1,6 @@
 /*
  * Bot de tickets - Licencia MIT
- * Copyright (c) 2025 maestro_oda
+ * Copyright (c) 2025
  *
  * Se concede permiso, sin cargo, a cualquier persona que obtenga una copia
  * de este software y los archivos de documentación asociados (el "Software"),
