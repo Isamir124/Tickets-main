@@ -1,0 +1,127 @@
+{
+  "system": {
+    "name": "Système de Tickets Avancé",
+    "description": "Bot professionnel pour la gestion du support",
+    "ready": "✅ Bot démarré en tant que {tag}",
+    "presence": "🛠️ {server} | Système de support professionnel",
+    "loading": "🔄 Chargement du système...",
+    "error": "❌ Erreur inattendue. Veuillez réessayer.",
+    "permission_denied": "❌ Vous n'avez pas les permissions pour cette action.",
+    "database_loading": "❌ Système en cours de démarrage. Veuillez patienter."
+  },
+  "tickets": {
+    "center_title": "🎫 Centre de Support Professionnel",
+    "center_description": "Sélectionnez la catégorie qui décrit le mieux votre situation. Notre équipe vous assistera avec la priorité maximale.",
+    "select_placeholder": "📌 Sélectionnez une catégorie d'aide",
+    "categories": {
+      "support": {
+        "name": "🛠️ Support Technique",
+        "description": "Problèmes techniques ou aide avec les services",
+        "details": "Des problèmes techniques ? Nos spécialistes vous aideront à les résoudre rapidement."
+      },
+      "report": {
+        "name": "🚫 Signaler Utilisateur",
+        "description": "Signaler un comportement inapproprié",
+        "details": "Un problème avec un autre utilisateur ? Signalez la situation et nous l'examinerons."
+      },
+      "question": {
+        "name": "❓ Questions Générales",
+        "description": "Questions sur le serveur ou les services",
+        "details": "Des questions générales ? Nous sommes là pour clarifier tous vos doutes."
+      },
+      "billing": {
+        "name": "💳 Facturation",
+        "description": "Questions sur les paiements et abonnements",
+        "details": "Problèmes avec les paiements ou la facturation ? Nous aidons avec tous les aspects financiers."
+      },
+      "feature": {
+        "name": "✨ Suggestions",
+        "description": "Propositions d'améliorations ou nouvelles fonctionnalités",
+        "details": "Des idées pour améliorer nos services ? Nous adorons entendre les suggestions."
+      }
+    },
+    "priorities": {
+      "critical": "🔴 CRITIQUE",
+      "high": "🟠 ÉLEVÉE", 
+      "medium": "🟡 MOYENNE",
+      "low": "🟢 FAIBLE"
+    },
+    "modal": {
+      "title": "📝 Créer Ticket Professionnel",
+      "description_label": "Comment pouvons-nous vous aider ?",
+      "description_placeholder": "Décrivez votre situation en détail...",
+      "priority_label": "Priorité du ticket",
+      "priority_placeholder": "Sélectionnez le niveau d'urgence"
+    },
+    "created": "✅ Ticket créé : {channel}",
+    "new_ticket": "🎫 Nouveau Ticket",
+    "user": "🧑 Utilisateur",
+    "id": "🆔 ID du Ticket",
+    "created_at": "🕒 Créé",
+    "description": "📃 Description",
+    "priority": "⚡ Priorité",
+    "footer": "Un spécialiste vous contactera bientôt.",
+    "buttons": {
+      "claim": "🎟️ Réclamer",
+      "add_user": "➕ Ajouter Utilisateur",
+      "close": "🔴 Fermer Ticket",
+      "priority": "⚡ Changer Priorité",
+      "transcript": "📋 Voir Transcription"
+    },
+    "claimed": "🎟️ Vous avez réclamé ce ticket.",
+    "already_claimed": "Ce ticket a déjà été réclamé par <@{user}>.",
+    "closed": "🔒 Ce ticket sera supprimé sous peu...",
+    "reopened": "♻️ Ticket Rouvert",
+    "reopen_description": "Vous pouvez continuer votre conversation avec le staff.",
+    "errors": {
+      "blacklisted": "❌ Vous êtes sur liste noire et ne pouvez pas créer de tickets.",
+      "has_open": "❌ Vous avez déjà un ticket ouvert. Fermez-le d'abord.",
+      "daily_limit": "❌ Vous ne pouvez créer que {limit} ticket(s) par jour.",
+      "invalid_category": "❌ Catégorie de ticket invalide.",
+      "not_found": "❌ Ticket non trouvé.",
+      "already_open": "❌ Le ticket est déjà ouvert.",
+      "user_not_found": "❌ Utilisateur non trouvé sur le serveur.",
+      "already_has_access": "❌ Cet utilisateur a déjà accès au ticket."
+    }
+  },
+  "commands": {
+    "ticket": {
+      "description": "📩 Envoyer le menu professionnel de tickets",
+      "success": "✅ Menu envoyé avec succès à {channel}",
+      "no_channel": "❌ Canal de tickets non trouvé. Vérifiez la configuration.",
+      "no_permissions": "❌ Pas de permissions pour envoyer des messages dans ce canal."
+    },
+    "blacklist": {
+      "description": "🛑 Gérer la liste noire des utilisateurs",
+      "added": "🚫 <@{user}> ajouté à la liste noire.",
+      "removed": "✅ <@{user}> retiré de la liste noire.",
+      "dm_message": "🚫 Vous avez été ajouté à la liste noire des tickets. Contactez un administrateur si vous pensez que c'est une erreur."
+    },
+    "language": {
+      "description": "🌍 Changer la langue du bot",
+      "current": "Langue actuelle : **{language}**",
+      "changed": "✅ Langue changée en **{language}**",
+      "list": "Langues disponibles : {languages}"
+    },
+    "stats": {
+      "description": "📊 Voir les statistiques des tickets",
+      "title": "📊 Statistiques du Système",
+      "total_tickets": "Total des Tickets",
+      "open_tickets": "Tickets Ouverts", 
+      "closed_tickets": "Tickets Fermés",
+      "avg_response": "Temps de Réponse Moyen",
+      "satisfaction": "Satisfaction Moyenne",
+      "top_staff": "Staff le Plus Actif"
+    }
+  },
+  "transcripts": {
+    "generating": "📋 Génération de la transcription...",
+    "generated": "✅ Transcription générée",
+    "summary": "📝 Résumé du Ticket",
+    "participants": "👥 Participants",
+    "duration": "⏱️ Durée",
+    "messages": "💬 Messages Totaux",
+    "attachments": "📎 Fichiers Joints",
+    "resolution": "✅ Résolution"
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "system": {
+    "name": "Advanced Ticket System",
+    "description": "Professional support management bot",
+    "ready": "✅ Bot started as {tag}",
+    "presence": "🛠️ {server} | Professional support system",
+    "loading": "🔄 Loading system...",
+    "error": "❌ Unexpected error. Please try again.",
+    "permission_denied": "❌ You don't have permissions for this action.",
+    "database_loading": "❌ System starting. Please wait a moment."
+  },
+  "tickets": {
+    "center_title": "🎫 Professional Support Center",
+    "center_description": "Select the category that best describes your situation. Our team will assist you with maximum priority.",
+    "select_placeholder": "📌 Select a help category",
+    "categories": {
+      "support": {
+        "name": "🛠️ Technical Support",
+        "description": "Technical issues or service help",
+        "details": "Having technical problems? Our specialists will help you resolve it quickly."
+      },
+      "report": {
+        "name": "🚫 Report User",
+        "description": "Report inappropriate behavior",
+        "details": "Had a problem with another user? Report the situation and we'll review it."
+      },
+      "question": {
+        "name": "❓ General Inquiries",
+        "description": "Questions about server or services",
+        "details": "Have general questions? We're here to clarify all your doubts."
+      },
+      "billing": {
+        "name": "💳 Billing",
+        "description": "Payment and subscription inquiries",
+        "details": "Problems with payments or billing? We help with all financial aspects."
+      },
+      "feature": {
+        "name": "✨ Suggestions",
+        "description": "Improvement proposals or new features",
+        "details": "Have ideas to improve our services? We love hearing suggestions."
+      }
+    },
+    "priorities": {
+      "critical": "🔴 CRITICAL",
+      "high": "🟠 HIGH", 
+      "medium": "🟡 MEDIUM",
+      "low": "🟢 LOW"
+    },
+    "modal": {
+      "title": "📝 Create Professional Ticket",
+      "description_label": "How can we help you?",
+      "description_placeholder": "Describe your situation in detail...",
+      "priority_label": "Ticket priority",
+      "priority_placeholder": "Select urgency level"
+    },
+    "created": "✅ Ticket created: {channel}",
+    "new_ticket": "🎫 New Ticket",
+    "user": "🧑 User",
+    "id": "🆔 Ticket ID",
+    "created_at": "🕒 Created",
+    "description": "📃 Description",
+    "priority": "⚡ Priority",
+    "footer": "A specialist will contact you soon.",
+    "buttons": {
+      "claim": "🎟️ Claim",
+      "add_user": "➕ Add User",
+      "close": "🔴 Close Ticket",
+      "priority": "⚡ Change Priority",
+      "transcript": "📋 View Transcript"
+    },
+    "claimed": "🎟️ You have claimed this ticket.",
+    "already_claimed": "This ticket was already claimed by <@{user}>.",
+    "closed": "🔒 This ticket will be deleted shortly...",
+    "reopened": "♻️ Ticket Reopened",
+    "reopen_description": "You can continue your conversation with staff.",
+    "errors": {
+      "blacklisted": "❌ You're blacklisted and cannot create tickets.",
+      "has_open": "❌ You already have an open ticket. Close it first.",
+      "daily_limit": "❌ You can only create {limit} ticket(s) per day.",
+      "invalid_category": "❌ Invalid ticket category.",
+      "not_found": "❌ Ticket not found.",
+      "already_open": "❌ Ticket is already open.",
+      "user_not_found": "❌ User not found in server.",
+      "already_has_access": "❌ This user already has access to the ticket."
+    }
+  },
+  "commands": {
+    "ticket": {
+      "description": "📩 Send professional ticket menu",
+      "success": "✅ Menu sent successfully to {channel}",
+      "no_channel": "❌ Ticket channel not found. Check configuration.",
+      "no_permissions": "❌ No permissions to send messages in that channel."
+    },
+    "blacklist": {
+      "description": "🛑 Manage user blacklist",
+      "added": "🚫 <@{user}> added to blacklist.",
+      "removed": "✅ <@{user}> removed from blacklist.",
+      "dm_message": "🚫 You've been added to the ticket blacklist. Contact an administrator if you think this is an error."
+    },
+    "language": {
+      "description": "🌍 Change bot language",
+      "current": "Current language: **{language}**",
+      "changed": "✅ Language changed to **{language}**",
+      "list": "Available languages: {languages}"
+    },
+    "stats": {
+      "description": "📊 View ticket statistics",
+      "title": "📊 System Statistics",
+      "total_tickets": "Total Tickets",
+      "open_tickets": "Open Tickets", 
+      "closed_tickets": "Closed Tickets",
+      "avg_response": "Average Response Time",
+      "satisfaction": "Average Satisfaction",
+      "top_staff": "Most Active Staff"
+    }
+  },
+  "transcripts": {
+    "generating": "📋 Generating transcript...",
+    "generated": "✅ Transcript generated",
+    "summary": "📝 Ticket Summary",
+    "participants": "👥 Participants",
+    "duration": "⏱️ Duration",
+    "messages": "💬 Total Messages",
+    "attachments": "📎 File Attachments",
+    "resolution": "✅ Resolution"
+  }
+}
