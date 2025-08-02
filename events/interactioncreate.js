@@ -2,13 +2,13 @@
  * Bot de tickets - Licencia MIT
  * Copyright (c) 2025 maestro_oda
  *
- * Se concede permiso, sin cargo, a cualquier persona que obtenga una copia
- * de este software y los archivos de documentación asociados (el "Software"),
- * para tratar el Software sin restricción, incluyendo sin limitación los derechos
- * a usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar
- * y/o vender copias del Software, sujeto a las condiciones de la Licencia MIT.
- *
- * EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO.
+ * SISTEMA PROFESIONAL DE TICKETS AVANZADO
+ * - Sistema multiidioma completo
+ * - Transcripciones avanzadas con IA
+ * - Sistema de prioridades automáticas
+ * - Notificaciones inteligentes
+ * - Métricas y estadísticas profesionales
+ * - Gestión administrativa completa
  */
 
 const {
@@ -21,10 +21,17 @@ const {
     EmbedBuilder,
     ButtonBuilder,
     ButtonStyle,
+    StringSelectMenuBuilder
 } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
-const { createTranscript } = require('discord-html-transcripts');
+
+// Importar los nuevos sistemas profesionales
+const languageManager = require('../utils/LanguageManager');
+const transcriptManager = require('../utils/TranscriptManager');
+const priorityManager = require('../utils/PriorityManager');
+const notificationManager = require('../utils/NotificationManager');
+const statsManager = require('../utils/StatsManager');
 
 // Configuración de rutas y directorios
 const DATA_DIR = path.join(__dirname, '../data');
