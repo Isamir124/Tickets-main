@@ -42,3 +42,5 @@ Edita el archivo `interactioncreate.js` con los IDs correspondientes a tu servid
   LOGS_CHANNEL: 'ID_CANAL_LOGS'
 }
 ## Si necesitas soporte unete a https://discord.gg/UNdMhq3Q7X
+
+## Mejora echo por isamir sistema de idioma y otras mejoras
