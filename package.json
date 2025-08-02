@@ -1,0 +1,20 @@
+{
+  "name": "bot-tickets-avanzado",
+  "version": "1.0.0",
+  "description": "Bot de Discord para gestionar un sistema avanzado de tickets con categorías, transcripciones y control de usuarios.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "maestro_oda",
+  "license": "MIT",
+  "soporte": "https://discord.gg/UNdMhq3Q7X",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "discord-html-transcripts": "^3.2.0",
+    "discord.js": "^14.21.0",
+    "discord.js-selfbot-v13": "^3.7.0",
+    "express": "^5.1.0"
+  }
+}
