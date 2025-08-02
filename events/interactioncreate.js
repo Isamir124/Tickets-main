@@ -1,14 +1,6 @@
 /*
- * Bot de tickets - Licencia MIT
- * Copyright (c) 2025 maestro_oda
- *
- * SISTEMA PROFESIONAL DE TICKETS AVANZADO
- * - Sistema multiidioma completo
- * - Transcripciones avanzadas con IA
- * - Sistema de prioridades automáticas
- * - Notificaciones inteligentes
- * - Métricas y estadísticas profesionales
- * - Gestión administrativa completa
+ * Sistema Profesional de Tickets Avanzado
+ * Versión 2.0 - Con todas las funcionalidades empresariales
  */
 
 const {
@@ -26,7 +18,7 @@ const {
 const fs = require('fs').promises;
 const path = require('path');
 
-// Importar los nuevos sistemas profesionales
+// Importar sistemas profesionales
 const languageManager = require('../utils/LanguageManager');
 const transcriptManager = require('../utils/TranscriptManager');
 const priorityManager = require('../utils/PriorityManager');
@@ -36,68 +28,69 @@ const statsManager = require('../utils/StatsManager');
 // Configuración de rutas y directorios
 const DATA_DIR = path.join(__dirname, '../data');
 const DB_PATH = path.join(DATA_DIR, 'tickets.json');
-const TRANSCRIPTS_DIR = path.join(DATA_DIR, 'ticket_transcripts');
 
-// Configuración del servidor (actualizala para coincidir con los valores del menú)
+// Configuración del servidor (Actualízala con tus IDs)
 const CONFIG = {
     CATEGORIES: {
-        soporte: '1401200019897581578',  // Cambia por tus ids correctos
-        reporte: '1401200088440639528',  
-        pregunta: '1401200050356359319'  
+        soporte: '1401200019897581578',
+        reporte: '1401200088440639528',
+        pregunta: '1401200050356359319',
+        billing: '1401200050356359320',  // Nueva categoría
+        feature: '1401200050356359321'   // Nueva categoría
     },
     STAFF_ROLES: ['TUS-IDS-DE-STAFF-PUEDES-AGREGAR-MAS', 'MUCHOS-MAS'],
     LOGS_CHANNEL: 'TU-LOG-CHANNEL-ID',
-    MAX_TICKETS_PER_DAY: 1,
-    TICKET_CLOSE_DELAY: 5000 // 5 segundos
+    MAX_TICKETS_PER_DAY: 3,  // Incrementado
+    TICKET_CLOSE_DELAY: 5000
 };
 
-// Inicialización de la base de datos
+// Base de datos mejorada
 let ticketsDB = {
     _blacklist: {},
     _stats: {},
-    _lastId: 0
+    _lastId: 0,
+    _config: {
+        maintenanceMode: false,
+        autoTranscripts: true,
+        notificationsEnabled: true
+    }
 };
 
-// Variable para controlar si la base de datos está lista
 let isDatabaseReady = false;
 
 /**
- * Carga la base de datos desde el archivo
+ * Carga la base de datos con mejor manejo de errores
  */
 async function loadDatabase() {
     try {
         await fs.access(DATA_DIR);
     } catch {
-        await fs.mkdir(DATA_DIR);
-    }
-
-    try {
-        await fs.access(TRANSCRIPTS_DIR);
-    } catch {
-        await fs.mkdir(TRANSCRIPTS_DIR);
+        await fs.mkdir(DATA_DIR, { recursive: true });
     }
 
     try {
         const data = await fs.readFile(DB_PATH, 'utf-8');
-        ticketsDB = JSON.parse(data);
+        const loadedData = JSON.parse(data);
         
-        // Asegurar que las estructuras básicas existan
-        ticketsDB._blacklist = ticketsDB._blacklist || {};
-        ticketsDB._stats = ticketsDB._stats || {};
-        ticketsDB._lastId = ticketsDB._lastId || 0;
+        // Merge con estructura por defecto
+        ticketsDB = {
+            ...ticketsDB,
+            ...loadedData,
+            _config: { ...ticketsDB._config, ...loadedData._config }
+        };
         
         isDatabaseReady = true;
-        console.log('✅ Base de datos de tickets cargada correctamente');
+        console.log('✅ Base de datos profesional cargada correctamente');
     } catch (error) {
         if (error.code !== 'ENOENT') {
             console.error('Error al cargar la base de datos:', error);
         }
-        isDatabaseReady = true; // Continuar aunque falle
+        isDatabaseReady = true;
     }
 }
 
 /**
- * Guarda la base de datos en el archivo
+ * Guarda la base de datos con mejor manejo
  */
 async function saveDatabase() {
     if (!isDatabaseReady) return;
@@ -111,39 +104,33 @@ async function saveDatabase() {
 
 /**
  * Verifica si un usuario es staff
- * @param {GuildMember} member 
- * @returns {boolean}
  */
 function isStaff(member) {
-    return member?.roles.cache.some(role => CONFIG.STAFF_ROLES.includes(role.id));
+    return member?.permissions.has(PermissionsBitField.Flags.ManageMessages) ||
+           member?.roles.cache.some(role => CONFIG.STAFF_ROLES.includes(role.id));
 }
 
 /**
- * Verifica si un usuario está en la blacklist
- * @param {string} userId 
- * @returns {boolean}
+ * Verifica si un usuario está en blacklist
  */
 function isBlacklisted(userId) {
-    if (!ticketsDB._blacklist) {
-        console.error('La blacklist no está inicializada');
-        ticketsDB._blacklist = {};
-        return false;
-    }
-    return Boolean(ticketsDB._blacklist[userId]);
+    return Boolean(ticketsDB._blacklist?.[userId]);
 }
 
 /**
- * Verifica si un usuario puede crear un nuevo ticket
- * @param {string} userId 
- * @returns {string|null} Mensaje de error o null si puede crear
+ * Verifica si se puede crear un ticket
  */
 function canCreateTicket(userId) {
     if (!isDatabaseReady) {
-        return '❌ El sistema de tickets está iniciando. Por favor, intenta nuevamente en unos momentos.';
+        return 'Sistema iniciando. Espera unos momentos.';
+    }
+
+    if (ticketsDB._config?.maintenanceMode) {
+        return 'Sistema en mantenimiento. Intenta más tarde.';
     }
 
     if (isBlacklisted(userId)) {
-        return '❌ Estás en la blacklist y no puedes crear tickets.';
+        return 'Estás en la blacklist y no puedes crear tickets.';
     }
 
     // Verificar tickets abiertos
@@ -152,49 +139,51 @@ function canCreateTicket(userId) {
         .some(([_, data]) => data.userId === userId && data.isOpen);
 
     if (hasOpenTicket) {
-        return '❌ Ya tienes un ticket abierto. Por favor cierra ese primero.';
+        return 'Ya tienes un ticket abierto. Cierra el anterior primero.';
     }
 
     // Verificar límite diario
     const today = new Date().toISOString().slice(0, 10);
     const userStats = ticketsDB._stats[userId] || {};
 
-    if (userStats.lastCreated === today &&
-        userStats.count >= CONFIG.MAX_TICKETS_PER_DAY) {
-        return `❌ Solo puedes crear ${CONFIG.MAX_TICKETS_PER_DAY} ticket(s) por día.`;
+    if (userStats.lastCreated === today && userStats.count >= CONFIG.MAX_TICKETS_PER_DAY) {
+        return `Solo puedes crear ${CONFIG.MAX_TICKETS_PER_DAY} tickets por día.`;
     }
 
     return null;
 }
 
 /**
- * Genera un nombre seguro para el canal
- * @param {string} username 
- * @returns {string}
+ * Genera nombre de canal mejorado
  */
-function generateChannelName(username) {
-    return `ticket-${username.toLowerCase()
+function generateChannelName(username, priority = 'medium') {
+    const priorityEmoji = {
+        critical: '🔴',
+        high: '🟠',
+        medium: '🟡',
+        low: '🟢'
+    };
+    
+    const baseName = username.toLowerCase()
         .replace(/[^a-z0-9]/g, '-')
         .replace(/-+/g, '-')
-        .slice(0, 20)}`;
+        .slice(0, 15);
+    
+    return `${priorityEmoji[priority]}-ticket-${baseName}`;
 }
 
 /**
- * Crea un nuevo ticket en el servidor
- * @param {Guild} guild 
- * @param {User} user 
- * @param {string} category 
- * @param {string} description 
- * @returns {Promise<TextChannel>}
+ * Crea un canal de ticket con configuración avanzada
  */
-async function createTicketChannel(guild, user, category, description) {
+async function createTicketChannel(guild, user, category, description, priority = 'medium') {
     const categoryId = CONFIG.CATEGORIES[category];
     if (!categoryId) {
-        console.error(`Categoría no encontrada: ${category}`);
         throw new Error('Categoría inválida');
     }
 
-    const channelName = generateChannelName(user.username);
+    const channelName = generateChannelName(user.username, priority);
+    const priorityConfig = priorityManager.getPriorityConfig(priority);
+    
     const overwrites = [
         { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
         {
@@ -202,7 +191,8 @@ async function createTicketChannel(guild, user, category, description) {
             allow: [
                 PermissionsBitField.Flags.ViewChannel,
                 PermissionsBitField.Flags.SendMessages,
-                PermissionsBitField.Flags.ReadMessageHistory
+                PermissionsBitField.Flags.ReadMessageHistory,
+                PermissionsBitField.Flags.AttachFiles
             ]
         },
         ...CONFIG.STAFF_ROLES.map(id => ({
@@ -210,7 +200,9 @@ async function createTicketChannel(guild, user, category, description) {
             allow: [
                 PermissionsBitField.Flags.ViewChannel,
                 PermissionsBitField.Flags.SendMessages,
-                PermissionsBitField.Flags.ReadMessageHistory
+                PermissionsBitField.Flags.ReadMessageHistory,
+                PermissionsBitField.Flags.AttachFiles,
+                PermissionsBitField.Flags.ManageMessages
             ]
         }))
     ];
@@ -219,477 +211,421 @@ async function createTicketChannel(guild, user, category, description) {
         name: channelName,
         type: ChannelType.GuildText,
         parent: categoryId,
-        permissionOverwrites: overwrites
+        permissionOverwrites: overwrites,
+        topic: `Ticket: ${user.tag} | Prioridad: ${priorityConfig.name} | Creado: ${new Date().toLocaleString()}`
     });
 }
 
 /**
- * Crea un embed para un nuevo ticket
- * @param {User} user 
- * @param {string} ticketId 
- * @param {string} description 
- * @returns {EmbedBuilder}
+ * Crea embed profesional para tickets
  */
-function createTicketEmbed(user, ticketId, description) {
+function createTicketEmbed(user, ticketId, description, priority, guild) {
+    const lang = languageManager.getLanguage(guild.id, user.id);
+    const priorityConfig = priorityManager.getPriorityConfig(priority);
+    
     return new EmbedBuilder()
-        .setTitle('🎫 Nuevo ticket')
+        .setTitle(`🎫 ${languageManager.get('tickets.new_ticket', guild.id, user.id)}`)
         .addFields(
-            { name: '🧑 Usuario', value: `<@${user.id}>`, inline: true },
-            { name: '🆔 ID del Ticket', value: ticketId, inline: true },
-            { name: '🕒 Creado', value: `<t:${Math.floor(Date.now() / 1000)}:F>` },
-            { name: '📃 Descripción', value: description }
+            { 
+                name: languageManager.get('tickets.user', guild.id, user.id), 
+                value: `<@${user.id}>`, 
+                inline: true 
+            },
+            { 
+                name: languageManager.get('tickets.id', guild.id, user.id), 
+                value: ticketId, 
+                inline: true 
+            },
+            { 
+                name: languageManager.get('tickets.priority', guild.id, user.id), 
+                value: `${priorityConfig.emoji} ${priorityConfig.name}`, 
+                inline: true 
+            },
+            { 
+                name: languageManager.get('tickets.created_at', guild.id, user.id), 
+                value: `<t:${Math.floor(Date.now() / 1000)}:F>`,
+                inline: false
+            },
+            { 
+                name: languageManager.get('tickets.description', guild.id, user.id), 
+                value: description.length > 1000 ? description.substring(0, 1000) + '...' : description,
+                inline: false
+            }
         )
         .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-        .setColor('DarkButNotBlack')
-        .setFooter({ text: 'Un staff se pondrá en contacto contigo pronto.' });
+        .setColor(priorityConfig.color)
+        .setFooter({ 
+            text: languageManager.get('tickets.footer', guild.id, user.id)
+        })
+        .setTimestamp();
 }
 
 /**
- * Crea los botones para un ticket
- * @returns {ActionRowBuilder}
+ * Crea botones avanzados para tickets
  */
-function createTicketButtons() {
+function createAdvancedTicketButtons(guild) {
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId('claim_ticket')
-            .setLabel('🎟️ Reclamar')
+            .setLabel(`🎟️ ${languageManager.get('tickets.buttons.claim', guild.id)}`)
             .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId('add_user')
-            .setLabel('➕ Añadir Usuario')
+            .setLabel(`➕ ${languageManager.get('tickets.buttons.add_user', guild.id)}`)
             .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
+            .setCustomId('priority_change')
+            .setLabel(`⚡ ${languageManager.get('tickets.buttons.priority', guild.id)}`)
+            .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
             .setCustomId('close_ticket')
-            .setLabel('🔴 Cerrar Ticket')
+            .setLabel(`🔴 ${languageManager.get('tickets.buttons.close', guild.id)}`)
             .setStyle(ButtonStyle.Danger)
     );
 }
 
 /**
- * Cierra un ticket y genera la transcripción
- * @param {TextChannel} channel 
- * @param {User} closer 
- * @param {string} reason 
- * @returns {Promise<void>}
+ * Cierra un ticket con transcripción avanzada
  */
 async function closeTicket(channel, closer, reason) {
     const ticketData = ticketsDB[channel.id];
     if (!ticketData || !ticketData.isOpen) return;
 
-    // Generar transcripción
-    const transcript = await createTranscript(channel, {
-        fileName: `${channel.name}.html`,
-        saveImages: true,
-        poweredBy: false
-    });
+    try {
+        // Generar transcripción avanzada
+        const transcriptData = await transcriptManager.generateAdvancedTranscript(channel, ticketData);
+        
+        // Actualizar datos del ticket
+        ticketData.closedAt = Date.now();
+        ticketData.isOpen = false;
+        ticketData.closedBy = closer.id;
+        ticketData.reason = reason;
+        ticketData.transcriptData = transcriptData;
 
-    const transcriptPath = path.join(TRANSCRIPTS_DIR, `${channel.id}.html`);
-    await fs.writeFile(transcriptPath, transcript.attachment);
+        // Registrar en estadísticas
+        await statsManager.recordTicketClosed(ticketData);
 
-    // Actualizar datos del ticket
-    ticketData.closedAt = Date.now();
-    ticketData.isOpen = false;
-    ticketData.closedBy = closer.id;
-    ticketData.reason = reason;
-    ticketData.transcriptPath = transcriptPath;
+        // Notificar cierre
+        await notificationManager.notifyTicketClosed(ticketData, closer, channel.guild, reason);
 
-    // Calcular duración
-    const created = ticketData.createdAt || Date.now();
-    const closed = ticketData.closedAt || Date.now();
-    const duration = Math.floor((closed - created) / 60000);
+        // Crear embed de logs profesional
+        const duration = ticketData.closedAt - ticketData.createdAt;
+        const embed = new EmbedBuilder()
+            .setTitle('📁 Ticket Cerrado Profesionalmente')
+            .addFields(
+                { name: 'Canal', value: channel.name, inline: true },
+                { name: 'Usuario', value: `<@${ticketData.userId}>`, inline: true },
+                { name: 'Cerrado por', value: `<@${closer.id}>`, inline: true },
+                { name: 'Prioridad', value: `${priorityManager.getPriorityConfig(ticketData.priority).emoji} ${ticketData.priority}`, inline: true },
+                { name: 'Duración', value: formatDuration(duration), inline: true },
+                { name: 'Categoría', value: ticketData.category, inline: true },
+                { name: 'Razón', value: reason || 'No especificada', inline: false },
+                { name: 'Resumen IA', value: transcriptData.summary.quickSummary || 'No disponible', inline: false }
+            )
+            .setColor('#FF0000')
+            .setTimestamp();
 
-    // Crear embed de logs
-    const logEmbed = new EmbedBuilder()
-        .setTitle('📁 Ticket cerrado')
-        .addFields(
-            { name: 'Canal', value: channel.name, inline: true },
-            { name: 'Usuario', value: `<@${ticketData.userId}>`, inline: true },
-            { name: 'Cerrado por', value: `<@${closer.id}>`, inline: true },
-            { name: 'Razón', value: reason || 'No especificada' },
-            { name: 'Duración', value: `${duration} minutos`, inline: true }
-        )
-        .setColor('Red')
-        .setTimestamp();
+        // Enviar a logs con transcripción
+        const logsChannel = channel.guild.channels.cache.get(CONFIG.LOGS_CHANNEL);
+        if (logsChannel) {
+            await logsChannel.send({ embeds: [embed] });
+            
+            // Enviar archivos de transcripción
+            if (transcriptData.formats.html) {
+                await logsChannel.send({
+                    content: `📎 Transcripción HTML del ticket **${channel.name}**`,
+                    files: [{ 
+                        attachment: Buffer.from(transcriptData.formats.html.attachment), 
+                        name: `${channel.name}.html` 
+                    }]
+                });
+            }
+        }
 
-    // Botón para reabrir
-    const reopenBtn = new ButtonBuilder()
-        .setCustomId(`reopen_ticket_${channel.id}`)
-        .setLabel('♻️ Reabrir Ticket')
-        .setStyle(ButtonStyle.Primary);
+        await saveDatabase();
 
-    const btnRow = new ActionRowBuilder().addComponents(reopenBtn);
+        // Mensaje de cierre
+        await channel.send('🔒 Este ticket será eliminado en breve. ¡Gracias por usar nuestro sistema profesional!');
+        setTimeout(() => channel.delete().catch(console.error), CONFIG.TICKET_CLOSE_DELAY);
 
-    // Enviar logs
-    const logsChannel = channel.guild.channels.cache.get(CONFIG.LOGS_CHANNEL);
-    if (logsChannel) {
-        await logsChannel.send({
-            embeds: [logEmbed],
-            components: [btnRow]
-        });
-        await logsChannel.send({
-            content: `📎 Transcripción del ticket **${channel.name}**`,
-            files: [{ attachment: transcriptPath, name: `${channel.name}.html` }]
-        });
+    } catch (error) {
+        console.error('Error en cierre profesional de ticket:', error);
+        // Fallback al cierre básico
+        await channel.send('❌ Error en transcripción avanzada, pero el ticket se cerrará normalmente.');
+        setTimeout(() => channel.delete().catch(console.error), CONFIG.TICKET_CLOSE_DELAY);
     }
-
-    // Notificar y eliminar canal
-    await channel.send('🔒 Este ticket será eliminado en breve...');
-    setTimeout(() => channel.delete().catch(console.error), CONFIG.TICKET_CLOSE_DELAY);
 }
 
 /**
- * Reabre un ticket cerrado
- * @param {Guild} guild 
- * @param {string} ticketId 
- * @param {User} reopener 
- * @returns {Promise<TextChannel>}
+ * Formatea duración en texto legible
  */
-async function reopenTicket(guild, ticketId, reopener) {
-    const ticketData = ticketsDB[ticketId];
-    if (!ticketData) throw new Error('Ticket no encontrado');
-    if (ticketData.isOpen) throw new Error('El ticket ya está abierto');
+function formatDuration(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-    const user = await guild.client.users.fetch(ticketData.userId).catch(() => null);
-    if (!user) throw new Error('El usuario que creó el ticket ya no está en el servidor');
-
-    const channelName = generateChannelName(user.username);
-    const overwrites = [
-        { id: guild.id, deny: [PermissionsBitField.Flags.ViewChannel] },
-        {
-            id: user.id,
-            allow: [
-                PermissionsBitField.Flags.ViewChannel,
-                PermissionsBitField.Flags.SendMessages,
-                PermissionsBitField.Flags.ReadMessageHistory
-            ]
-        },
-        ...CONFIG.STAFF_ROLES.map(id => ({
-            id,
-            allow: [
-                PermissionsBitField.Flags.ViewChannel,
-                PermissionsBitField.Flags.SendMessages,
-                PermissionsBitField.Flags.ReadMessageHistory
-            ]
-        }))
-    ];
-
-    const channel = await guild.channels.create({
-        name: channelName,
-        type: ChannelType.GuildText,
-        parent: CONFIG.CATEGORIES.soporte, // Usar la categoría de soporte por defecto
-        permissionOverwrites: overwrites
-    });
-
-    // Actualizar datos del ticket
-    ticketData.isOpen = true;
-    ticketData.reopenedAt = Date.now();
-    ticketData.reopenedBy = reopener.id;
-    ticketData.channelId = channel.id;
-    delete ticketData.closedAt;
-    delete ticketData.closedBy;
-
-    await saveDatabase();
-
-    // Enviar mensaje de reapertura
-    await channel.send({
-        content: `<@${user.id}> tu ticket ha sido reabierto.`,
-        embeds: [
-            new EmbedBuilder()
-                .setTitle('♻️ Ticket Reabierto')
-                .setDescription('Puedes continuar tu conversación con el staff.')
-                .setColor('Green')
-        ]
-    });
-
-    return channel;
+    if (days > 0) return `${days}d ${hours % 24}h ${minutes % 60}m`;
+    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
 }
 
-// Cargar la base de datos al iniciar
+// Cargar base de datos al inicio
 loadDatabase().catch(console.error);
 
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction) {
         try {
-            console.log(`[INTERACTION] Tipo: ${interaction.type}, ID: ${interaction.id}, CustomID: ${interaction.customId || 'N/A'}`);
-            
-            // Verificar permisos del bot primero
+            // Verificar permisos del bot
             if (!interaction.guild?.members.me?.permissions.has([
                 PermissionsBitField.Flags.ViewChannel,
                 PermissionsBitField.Flags.SendMessages,
                 PermissionsBitField.Flags.ManageChannels,
                 PermissionsBitField.Flags.ManageRoles
             ])) {
-                console.error('El bot no tiene los permisos necesarios');
                 return interaction.reply({
-                    content: '❌ El bot no tiene los permisos necesarios. Contacta a un administrador.',
-                    ephemeral: true,
-                    flags: 64
+                    content: '❌ El bot no tiene los permisos necesarios.',
+                    ephemeral: true
                 });
             }
 
-            // Verificar si la interacción es válida y en un servidor
-            if (!interaction.inGuild()) {
-                console.log('Interacción no en guild, ignorando');
-                return;
-            }
+            if (!interaction.inGuild()) return;
 
             const { user, guild, channel, member } = interaction;
 
-            // Manejar selección de categoría (StringSelectMenuInteraction)
+            // MANEJO DE SELECCIÓN DE CATEGORÍA
             if (interaction.isStringSelectMenu() && interaction.customId === 'menu_categoria') {
-                console.log('Procesando selección de categoría de ticket');
-                
-                // Verificar si la base de datos está lista
-                if (!isDatabaseReady) {
-                    return interaction.reply({
-                        content: '❌ El sistema de tickets está iniciando. Por favor, intenta nuevamente en unos momentos.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
                 const error = canCreateTicket(user.id);
                 if (error) {
-                    console.log(`Usuario no puede crear ticket: ${error}`);
                     return interaction.reply({ 
-                        content: error, 
-                        ephemeral: true,
-                        flags: 64
+                        content: `❌ ${error}`, 
+                        ephemeral: true
                     });
                 }
 
                 const modal = new ModalBuilder()
                     .setCustomId(`ticket_modal_${interaction.values[0]}`)
-                    .setTitle('📝 Crear Ticket');
+                    .setTitle('📝 Crear Ticket Profesional');
 
-                const input = new TextInputBuilder()
+                const descriptionInput = new TextInputBuilder()
                     .setCustomId('description')
                     .setLabel('¿En qué podemos ayudarte?')
                     .setStyle(TextInputStyle.Paragraph)
-                    .setPlaceholder('Describe tu situación...')
-                    .setRequired(true);
+                    .setPlaceholder('Describe detalladamente tu situación...')
+                    .setRequired(true)
+                    .setMaxLength(1000);
 
-                modal.addComponents(new ActionRowBuilder().addComponents(input));
+                modal.addComponents(new ActionRowBuilder().addComponents(descriptionInput));
                 return await interaction.showModal(modal);
             }
 
-            // Manejar envío de modal de ticket
+            // MANEJO DE MODAL DE TICKET
             if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_modal_')) {
                 const error = canCreateTicket(user.id);
-                if (error) return interaction.reply({ 
-                    content: error, 
-                    ephemeral: true,
-                    flags: 64
-                });
+                if (error) {
+                    return interaction.reply({ 
+                        content: `❌ ${error}`, 
+                        ephemeral: true
+                    });
+                }
 
                 const category = interaction.customId.split('_')[2];
                 const description = interaction.fields.getTextInputValue('description');
 
-                // Verificación adicional de categoría
-                if (!CONFIG.CATEGORIES[category]) {
-                    console.error(`Categoría no encontrada: ${category}`);
-                    return interaction.reply({
-                        content: '❌ Categoría de ticket no válida. Por favor, inténtalo de nuevo.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
+                // Detectar prioridad automáticamente
+                const detectedPriority = priorityManager.detectPriority(description, category);
 
                 try {
-                    const ticketChannel = await createTicketChannel(guild, user, category, description);
+                    const ticketChannel = await createTicketChannel(guild, user, category, description, detectedPriority);
                     const ticketId = `T-${Date.now()}`;
 
-                    // Registrar ticket
+                    // Registrar ticket con datos avanzados
                     ticketsDB[ticketChannel.id] = {
                         id: ticketId,
                         userId: user.id,
                         category,
                         description,
+                        priority: detectedPriority,
                         createdAt: Date.now(),
                         isOpen: true,
                         claimedBy: null,
-                        claimedAt: null
+                        claimedAt: null,
+                        channelId: ticketChannel.id
                     };
 
                     // Actualizar estadísticas
                     const today = new Date().toISOString().slice(0, 10);
-                    ticketsDB._stats[user.id] = ticketsDB._stats[user.id] || { count: 0 };
+                    if (!ticketsDB._stats[user.id]) {
+                        ticketsDB._stats[user.id] = { count: 0 };
+                    }
                     ticketsDB._stats[user.id].lastCreated = today;
                     ticketsDB._stats[user.id].count += 1;
 
                     await saveDatabase();
 
-                    // Enviar mensaje de ticket
+                    // Registrar en sistema de estadísticas
+                    await statsManager.recordTicketCreated(ticketsDB[ticketChannel.id]);
+
+                    // Enviar mensaje profesional al canal
                     await ticketChannel.send({
-                        content: `<@&${CONFIG.STAFF_ROLES.join('> <@&')}> - Nuevo ticket`,
-                        embeds: [createTicketEmbed(user, ticketId, description)],
-                        components: [createTicketButtons()]
+                        content: `<@&${CONFIG.STAFF_ROLES.join('> <@&')}> - Nuevo ticket de prioridad ${priorityManager.getPriorityConfig(detectedPriority).emoji}`,
+                        embeds: [createTicketEmbed(user, ticketId, description, detectedPriority, guild)],
+                        components: [createAdvancedTicketButtons(guild)]
                     });
 
+                    // Notificar al sistema
+                    await notificationManager.notifyNewTicket(ticketsDB[ticketChannel.id], guild, ticketChannel);
+
                     return interaction.reply({
-                        content: `✅ Tu ticket ha sido creado: ${ticketChannel}`,
-                        ephemeral: true,
-                        flags: 64
+                        content: `✅ Tu ticket profesional ha sido creado: ${ticketChannel}\n🔥 Prioridad detectada: ${priorityManager.getPriorityConfig(detectedPriority).emoji} ${detectedPriority.toUpperCase()}`,
+                        ephemeral: true
                     });
+
                 } catch (error) {
-                    console.error('Error al crear ticket:', error);
+                    console.error('Error creando ticket profesional:', error);
                     return interaction.reply({
-                        content: '❌ Ocurrió un error al crear el ticket. Intenta nuevamente.',
-                        ephemeral: true,
-                        flags: 64
+                        content: '❌ Error creando el ticket. Intenta nuevamente.',
+                        ephemeral: true
                     });
                 }
             }
 
-            // Manejar reclamación de ticket
-            if (interaction.isButton() && interaction.customId === 'claim_ticket') {
+            // MANEJO DE BOTONES
+            if (interaction.isButton()) {
+                const ticketData = ticketsDB[channel.id];
+                
+                switch (interaction.customId) {
+                    case 'claim_ticket':
+                        if (!isStaff(member)) {
+                            return interaction.reply({
+                                content: '❌ Solo el staff puede reclamar tickets.',
+                                ephemeral: true
+                            });
+                        }
+
+                        if (!ticketData?.isOpen) {
+                            return interaction.reply({
+                                content: '❌ Ticket no válido o cerrado.',
+                                ephemeral: true
+                            });
+                        }
+
+                        if (ticketData.claimedBy) {
+                            return interaction.reply({
+                                content: `❌ Ya reclamado por <@${ticketData.claimedBy}>.`,
+                                ephemeral: true
+                            });
+                        }
+
+                        ticketData.claimedBy = user.id;
+                        ticketData.claimedAt = Date.now();
+                        await saveDatabase();
+
+                        await statsManager.recordTicketClaimed(ticketData, user.id);
+                        await notificationManager.notifyTicketClaimed(ticketData, user, guild);
+
+                        return interaction.reply({
+                            content: `🎟️ Has reclamado este ticket profesionalmente.`,
+                            ephemeral: false
+                        });
+
+                    case 'priority_change':
+                        if (!isStaff(member)) {
+                            return interaction.reply({
+                                content: '❌ Solo el staff puede cambiar prioridades.',
+                                ephemeral: true
+                            });
+                        }
+
+                        const priorityMenu = new StringSelectMenuBuilder()
+                            .setCustomId('priority_select')
+                            .setPlaceholder('Selecciona nueva prioridad')
+                            .addOptions(
+                                { label: '🔴 CRÍTICA', value: 'critical', description: 'Máxima urgencia' },
+                                { label: '🟠 ALTA', value: 'high', description: 'Alta prioridad' },
+                                { label: '🟡 MEDIA', value: 'medium', description: 'Prioridad normal' },
+                                { label: '🟢 BAJA', value: 'low', description: 'Baja prioridad' }
+                            );
+
+                        const row = new ActionRowBuilder().addComponents(priorityMenu);
+                        return interaction.reply({
+                            content: 'Selecciona la nueva prioridad:',
+                            components: [row],
+                            ephemeral: true
+                        });
+
+                        case 'close_ticket':
+                        if (!isStaff(member)) {
+                            return interaction.reply({
+                                content: '❌ Solo el staff puede cerrar tickets.',
+                                ephemeral: true
+                            });
+                        }
+
+                        const closeModal = new ModalBuilder()
+                            .setCustomId('close_ticket_modal')
+                            .setTitle('Cerrar Ticket - Razón');
+
+                        const reasonInput = new TextInputBuilder()
+                            .setCustomId('reason')
+                            .setLabel('Razón para cerrar el ticket')
+                            .setStyle(TextInputStyle.Paragraph)
+                            .setRequired(true);
+
+                        closeModal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
+                        return interaction.showModal(closeModal);
+                }
+            }
+
+            // MANEJO DE CAMBIO DE PRIORIDAD
+            if (interaction.isStringSelectMenu() && interaction.customId === 'priority_select') {
                 if (!isStaff(member)) {
                     return interaction.reply({
-                        content: '❌ Solo el staff puede reclamar tickets.',
-                        ephemeral: true,
-                        flags: 64
+                        content: '❌ Solo el staff puede cambiar prioridades.',
+                        ephemeral: true
                     });
                 }
 
                 const ticketData = ticketsDB[channel.id];
-                if (!ticketData || !ticketData.isOpen) {
+                if (!ticketData) {
                     return interaction.reply({
-                        content: 'Este ticket no está registrado o ya está cerrado.',
-                        ephemeral: true,
-                        flags: 64
+                        content: '❌ Datos del ticket no encontrados.',
+                        ephemeral: true
                     });
                 }
 
-                if (ticketData.claimedBy) {
-                    return interaction.reply({
-                        content: `Este ticket ya fue reclamado por <@${ticketData.claimedBy}>.`,
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
+                const newPriority = interaction.values[0];
+                const oldPriority = ticketData.priority;
+                const priorityConfig = priorityManager.getPriorityConfig(newPriority);
 
-                ticketData.claimedBy = user.id;
-                ticketData.claimedAt = Date.now();
+                ticketData.priority = newPriority;
+                ticketData.priorityChangedAt = Date.now();
+                ticketData.priorityChangedBy = user.id;
+
                 await saveDatabase();
 
-                return interaction.reply({
-                    content: `🎟️ Has reclamado este ticket.`,
-                    ephemeral: false
-                });
+                const embed = new EmbedBuilder()
+                    .setTitle('⚡ Prioridad Actualizada')
+                    .setDescription(`Prioridad cambiada de ${oldPriority} a ${newPriority}`)
+                    .setColor(priorityConfig.color)
+                    .addFields(
+                        { name: 'Nueva Prioridad', value: `${priorityConfig.emoji} ${priorityConfig.name}`, inline: true },
+                        { name: 'SLA', value: `${priorityConfig.slaHours} horas`, inline: true },
+                        { name: 'Modificado por', value: `<@${user.id}>`, inline: true }
+                    )
+                    .setTimestamp();
+
+                return interaction.reply({ embeds: [embed] });
             }
 
-            // Manejar adición de usuario
-            if (interaction.isButton() && interaction.customId === 'add_user') {
-                if (!isStaff(member)) {
-                    return interaction.reply({
-                        content: '❌ Solo el staff puede añadir usuarios al ticket.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                const modal = new ModalBuilder()
-                    .setCustomId('add_user_modal')
-                    .setTitle('Añadir Usuario al Ticket');
-
-                const userInput = new TextInputBuilder()
-                    .setCustomId('user_id')
-                    .setLabel('Menciona o coloca ID del usuario')
-                    .setStyle(TextInputStyle.Short)
-                    .setPlaceholder('Ejemplo: @usuario o 123456789012345678')
-                    .setRequired(true);
-
-                modal.addComponents(new ActionRowBuilder().addComponents(userInput));
-                return interaction.showModal(modal);
-            }
-
-            // Manejar envío de modal para añadir usuario
-            if (interaction.isModalSubmit() && interaction.customId === 'add_user_modal') {
-                if (!isStaff(member)) {
-                    return interaction.reply({
-                        content: '❌ Solo el staff puede añadir usuarios al ticket.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                const userId = interaction.fields.getTextInputValue('user_id').replace(/[<@!>]/g, '');
-                const targetMember = await guild.members.fetch(userId).catch(() => null);
-
-                if (!targetMember) {
-                    return interaction.reply({
-                        content: '❌ No se encontró ese usuario en el servidor.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                const ticketData = ticketsDB[channel.id];
-                if (!ticketData || !ticketData.isOpen) {
-                    return interaction.reply({
-                        content: 'Este canal no es un ticket abierto válido.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                const hasAccess = channel.permissionsFor(targetMember)?.has(
-                    PermissionsBitField.Flags.ViewChannel
-                );
-
-                if (hasAccess) {
-                    return interaction.reply({
-                        content: 'Este usuario ya tiene acceso a este ticket.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                await channel.permissionOverwrites.edit(targetMember.id, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    ReadMessageHistory: true
-                });
-
-                await interaction.reply({
-                    content: `✅ Se añadió correctamente a <@${targetMember.id}> al ticket.`,
-                    ephemeral: false
-                });
-                await channel.send(`➕ <@${targetMember.id}> fue añadido al ticket por <@${user.id}>.`);
-            }
-
-            // Manejar cierre de ticket
-            if (interaction.isButton() && interaction.customId === 'close_ticket') {
-                if (!isStaff(member)) {
-                    return interaction.reply({
-                        content: '❌ Solo el staff puede cerrar tickets.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                const modal = new ModalBuilder()
-                    .setCustomId('close_ticket_modal')
-                    .setTitle('Cerrar Ticket - Razón');
-
-                const reasonInput = new TextInputBuilder()
-                    .setCustomId('reason')
-                    .setLabel('Razón para cerrar el ticket')
-                    .setStyle(TextInputStyle.Paragraph)
-                    .setRequired(true);
-
-                modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
-                return interaction.showModal(modal);
-            }
-
-            // Manejar envío de modal para cerrar ticket
+            // MANEJO DE MODAL DE CIERRE
             if (interaction.isModalSubmit() && interaction.customId === 'close_ticket_modal') {
                 if (!isStaff(member)) {
                     return interaction.reply({
                         content: '❌ Solo el staff puede cerrar tickets.',
-                        ephemeral: true,
-                        flags: 64
+                        ephemeral: true
                     });
                 }
 
@@ -698,60 +634,29 @@ module.exports = {
                 try {
                     await closeTicket(channel, user, reason);
                     await interaction.reply({
-                        content: '✅ El ticket se está cerrando y fue registrado.',
-                        ephemeral: true,
-                        flags: 64
+                        content: '✅ El ticket se está cerrando con transcripción avanzada.',
+                        ephemeral: true
                     });
                 } catch (error) {
-                    console.error('Error al cerrar ticket:', error);
+                    console.error('Error cerrando ticket:', error);
                     await interaction.reply({
-                        content: '❌ Error al cerrar el ticket. Intenta nuevamente.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-            }
-
-            // Manejar reapertura de ticket
-            if (interaction.isButton() && interaction.customId.startsWith('reopen_ticket_')) {
-                if (!isStaff(member)) {
-                    return interaction.reply({
-                        content: '❌ Solo el staff puede reabrir tickets.',
-                        ephemeral: true,
-                        flags: 64
-                    });
-                }
-
-                const ticketId = interaction.customId.split('_')[2];
-
-                try {
-                    const newChannel = await reopenTicket(guild, ticketId, user);
-                    await interaction.reply({
-                        content: `✅ Ticket reabierto en ${newChannel}`,
-                        ephemeral: true,
-                        flags: 64
-                    });
-                } catch (error) {
-                    await interaction.reply({
-                        content: `❌ ${error.message}`,
-                        ephemeral: true,
-                        flags: 64
+                        content: '❌ Error al cerrar el ticket.',
+                        ephemeral: true
                     });
                 }
             }
 
         } catch (error) {
-            console.error('Error en interactionCreate:', error);
+            console.error('Error en interactionCreate profesional:', error);
 
             if (!interaction.replied && !interaction.deferred) {
                 try {
                     await interaction.reply({
-                        content: '❌ Ocurrió un error inesperado. Intenta nuevamente más tarde.',
-                        ephemeral: true,
-                        flags: 64
+                        content: '❌ Error inesperado en el sistema profesional.',
+                        ephemeral: true
                     });
                 } catch (innerError) {
-                    console.error('Error al responder a la interacción:', innerError);
+                    console.error('Error respondiendo:', innerError);
                 }
             }
         }
