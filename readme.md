@@ -27,6 +27,9 @@ Un bot de Discord diseñado para gestionar un sistema de tickets avanzado con so
 
 ## Si necesitas soporte unete a https://discord.gg/UNdMhq3Q7X
 
+## Mejora echo por isamir sistema de idioma y otras mejoras
+
+
 ### Configuración inicial
 
 Edita el archivo `interactioncreate.js` con los IDs correspondientes a tu servidor:
@@ -42,5 +45,3 @@ Edita el archivo `interactioncreate.js` con los IDs correspondientes a tu servid
   LOGS_CHANNEL: 'ID_CANAL_LOGS'
 }
 ## Si necesitas soporte unete a https://discord.gg/UNdMhq3Q7X
-
-## Mejora echo por isamir sistema de idioma y otras mejoras
